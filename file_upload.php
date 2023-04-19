@@ -13,6 +13,8 @@
 // 　 入力されたファイル名から他のディレクトリの情報を取られてしまったり、攻撃を受けてしまうこと
 //    対策としてbasename関数を使って、パスの最後の名前を返す
 
+require_once "./dbc.php";
+
 $file = $_FILES['img'];
 // ⑤
 $filename = basename($file['name']);
@@ -23,6 +25,7 @@ $filesize = $file['size'];
 $upload_dir = '/Applications/MAMP/htdocs/upload/images/';
 // ②
 $save_filename = date('YmdHis') . $filename;
+$save_path = $upload_dir . $save_filename;
 
 // caption(見出し)を取得
 // サイバー攻撃につながるような文字を無効化
@@ -56,21 +59,30 @@ if (count($err_msgs) === 0) {
     // ファイルはあるかどうか？
     if (is_uploaded_file($tmp_path)) {
         // ④,②
-        if(move_uploaded_file($tmp_path, $upload_dir. $save_filename)) {
+        if(move_uploaded_file($tmp_path, $save_path)) {
         echo $filename . 'を' . $upload_dir .'アップしました。';
-        } else {
-        echo 'ファイルが保存できませんでした。';
-        }
+        // $fileData = array($filename, $save_path, $caption);
+        // DBに保存(ファイル名、ファイルパス、キャプション)
+        $result = fileSave($filename, $save_path, $caption);
+
+       if ($result) {
+        echo 'データベースに保存しました！';
+      } else {
+        echo 'データベースへの保存が失敗しました！';
+      }
     } else {
-        echo 'ファイルが選択されていません。';
-        echo '<br>';
+      echo 'ファイルが保存できませんでした。';
     }
-    } else {
-        foreach($err_msgs as $msg) {
-            echo $msg;
-            echo '<br>';
-        }
-    }
+  } else {
+    echo 'ファイルが選択されていません。';
+    echo '<br>';
+  }
+} else {
+  foreach ($err_msgs as $msg) {
+    echo $msg;
+    echo '<br>';
+  }
+}
 
 ?>
 <a href="./upload_form.php">戻る</a>
